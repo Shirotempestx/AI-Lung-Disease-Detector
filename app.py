@@ -1,26 +1,24 @@
 import gradio as gr
-# We will import YOLO later when the model is done!
+from ultralytics import YOLO
 
-# 1. The Dummy Function
-# This fakes the AI prediction so you can test your interface immediately.
+# Load your actual trained model!
+model = YOLO('best.pt')
+
 def predict_xray(image):
-    # Imagine the AI looked at the image and calculated this:
-    mock_results = {
-        "Normal": 0.10,
-        "Pneumonia": 0.85,
-        "Tuberculosis": 0.05
-    }
-    return mock_results
+    # Run the real image through your trained AI
+    results = model(image)
+    
+    # Extract the probabilities for the 3 classes and send them to the interface
+    names_dict = results[0].names
+    probs = results[0].probs.data.tolist()
+    return {names_dict[i]: probs[i] for i in range(len(names_dict))}
 
-# 2. The Web Interface Design
 app = gr.Interface(
-    fn=predict_xray, # The function that runs when a user clicks 'submit'
-    inputs=gr.Image(type="pil"), # Creates a drag-and-drop box for the X-Ray
-    outputs=gr.Label(num_top_classes=3), # Creates a beautiful progress bar chart for the results
+    fn=predict_xray,
+    inputs=gr.Image(type="pil"),
+    outputs=gr.Label(num_top_classes=3),
     title="⚕️ AI Lung Disease Detector",
-    description="Upload a chest X-Ray (Radiography) to instantly detect Normal, Pneumonia, or Tuberculosis classifications.",
-    theme="huggingface"
+    description="Upload a chest X-Ray (Radiography) to instantly detect Normal, Pneumonia, or Tuberculosis classifications."
 )
 
-# 3. Launch the Web App!
 app.launch()
